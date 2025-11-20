@@ -1,48 +1,32 @@
 """
-Database Schemas
+Database Schemas for API Monitoring SaaS
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model represents a MongoDB collection. The collection name is the lowercase
+of the class name (e.g., Project -> "project").
 """
-
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Literal
 
-# Example schemas (replace with your own):
+class Project(BaseModel):
+    name: str = Field(..., description="Project display name")
+    slug: str = Field(..., description="URL-friendly identifier")
+    description: Optional[str] = Field(None, description="Short description")
 
-class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+class Apikey(BaseModel):
+    project_id: str = Field(..., description="Associated project id (string)")
+    name: str = Field(..., description="Key label")
+    key: str = Field(..., description="The API key value")
+    active: bool = Field(True, description="Whether key is active")
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
-
-# Add your own schemas here:
-# --------------------------------------------------
-
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class Apievent(BaseModel):
+    project_id: str = Field(..., description="Project id")
+    api_key_id: Optional[str] = Field(None, description="API key id if provided")
+    method: Literal["GET","POST","PUT","PATCH","DELETE","OPTIONS","HEAD"] = Field(...)
+    path: str = Field(..., description="Request path")
+    status: int = Field(..., ge=100, le=599)
+    latency_ms: float = Field(..., ge=0)
+    ip: Optional[str] = Field(None)
+    user_agent: Optional[str] = Field(None)
+    request_size: Optional[int] = Field(None, ge=0)
+    response_size: Optional[int] = Field(None, ge=0)
+    error_message: Optional[str] = Field(None)
